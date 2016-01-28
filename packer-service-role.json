@@ -1,0 +1,81 @@
+{
+  "variables" : {
+    "description": "Service role",
+    "aws_access_key_id": "{{ env `AWS_ACCESS_KEY_ID` }}",
+    "aws_secret_access_key": "{{ env `AWS_SECRET_ACCESS_KEY` }}",
+    "region" : "{{ env `AWS_DEFAULT_REGION` }}",
+    "service": "service",
+    "version": "1.0",
+    "role": "{{ env `PACKER_ROLE` }}",
+    "ami_id": "{{ env `PACKER_AMI_ID` }}",
+    "ami_name": "service",
+    "instance_type": "{{ env `PACKER_INSTANCE_TYPE` }}",
+    "volume_size_root": "30",
+    "volume_size_data": "100",
+    "security_group_default": "{{ env `PACKER_SECURITY_GROUP_DEFAULT` }}",
+    "security_group_role": "{{ env `PACKER_SECURITY_GROUP_ROLE` }}",
+    "subnet": "{{ env `PACKER_SUBNET` }}"
+  },
+
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "region": "{{ user `region` }}",
+      "source_ami": "{{ user `ami_id` }}",
+      "instance_type": "{{ user `instance_type` }}",
+      "ssh_username": "centos",
+      "ssh_timeout": "5m",
+      "ssh_pty" : true,
+      "ami_name": "{{ user `ami_name` }}-{{ user `role` }}-{{ isotime | clean_ami_name }}",
+      "ami_description" : "{{ user `description` }} - {{ user `role` }}",
+      "ami_virtualization_type": "hvm",
+      "associate_public_ip_address": true,
+      "launch_block_device_mappings": [
+        {
+          "device_name": "/dev/sda1",
+          "volume_size": "{{ user `volume_size_root` }}",
+          "volume_type": "gp2",
+          "delete_on_termination": true
+        },
+        {
+          "device_name": "/dev/sdb",
+          "volume_size": "{{ user `volume_size_data` }}",
+          "volume_type": "gp2",
+          "delete_on_termination": true
+        }
+      ],
+      "ami_block_device_mappings": [
+      ],
+      "security_group_ids": [
+        "{{ user `security_group_default` }}",
+        "{{ user `security_group_role` }}"
+      ],
+      "subnet_id": "{{ user `subnet` }}",
+      "run_tags" : {
+        "Service": "{{ user `service` }}",
+        "Version": "{{ user `version` }}",
+        "Role": "{{ user `role` }}",
+        "Base_AMI": "{{ user `ami_id` }}"
+      },
+      "tags": {
+        "Name": "{{ user `ami_name` }}-{{ user `role` }}"
+      }
+    }
+  ],
+
+  "provisioners": [
+    {
+      "type": "shell",
+      "environment_vars": [
+        "AWS_ACCESS_KEY_ID={{ user `aws_access_key_id` }}",
+        "AWS_SECRET_ACCESS_KEY={{ user `aws_secret_access_key` }}",
+        "AWS_DEFAULT_REGION={{ user `region` }}",
+        "PACKER=true"
+      ],
+      "execute_command": "{{ .Vars }} sudo -E bash '{{ .Path }}'",
+      "scripts": [
+        "ec2-userdata.sh"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "variables" : {
+    "description": "Service base",
+    "aws_access_key_id": "{{ env `AWS_ACCESS_KEY_ID` }}",
+    "aws_secret_access_key": "{{ env `AWS_SECRET_ACCESS_KEY` }}",
+    "region" : "{{ env `AWS_DEFAULT_REGION` }}",
+    "service": "service",
+    "version": "1.0",
+    "ami_id": "{{ env `PACKER_AMI_ID` }}",
+    "ami_name": "service",
+    "instance_type": "{{ env `PACKER_INSTANCE_TYPE` }}",
+    "volume_size_root": "30",
+    "volume_size_data": "100"
+  },
+
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "region": "{{ user `region` }}",
+      "source_ami": "{{ user `ami_id` }}",
+      "instance_type": "{{ user `instance_type` }}",
+      "ssh_username": "centos",
+      "ssh_timeout": "5m",
+      "ssh_pty" : true,
+      "ami_name": "{{ user `ami_name` }}-{{ isotime | clean_ami_name }}",
+      "ami_description" : "{{ user `description` }}",
+      "launch_block_device_mappings": [
+        {
+          "device_name": "/dev/sda1",
+          "volume_size": "{{ user `volume_size_root` }}",
+          "delete_on_termination": true
+        },
+        {
+          "device_name": "/dev/sdb",
+          "volume_size": "{{ user `volume_size_data` }}",
+          "volume_type": "gp2",
+          "delete_on_termination": true
+        }
+      ],
+      "ami_block_device_mappings": [
+      ],
+      "run_tags" : {
+        "Service": "{{ user `service` }}",
+        "Version": "{{ user `version` }}",
+        "Base_AMI": "{{ user `ami_id` }}"
+      },
+      "tags": {
+        "Name": "{{ user `ami_name` }}"
+      }
+    }
+  ],
+
+  "provisioners": [
+    {
+      "type": "shell",
+      "environment_vars": [
+        "AWS_ACCESS_KEY_ID={{ user `aws_access_key_id` }}",
+        "AWS_SECRET_ACCESS_KEY={{ user `aws_secret_access_key` }}",
+        "AWS_DEFAULT_REGION={{ user `region` }}",
+        "PACKER=true"
+      ],
+      "execute_command": "{{ .Vars }} sudo -E bash '{{ .Path }}'",
+      "scripts": [
+        "ec2-userdata.sh"
+      ]
+    }
+  ]
+}
