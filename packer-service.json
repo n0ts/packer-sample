@@ -3,7 +3,7 @@
     "description": "Service base",
     "aws_access_key_id": "{{ env `AWS_ACCESS_KEY_ID` }}",
     "aws_secret_access_key": "{{ env `AWS_SECRET_ACCESS_KEY` }}",
-    "region" : "{{ env `AWS_DEFAULT_REGION` }}",
+    "region" : "{{ env `AWS_REGION` }}",
     "service": "service",
     "version": "1.0",
     "ami_id": "{{ env `PACKER_AMI_ID` }}",

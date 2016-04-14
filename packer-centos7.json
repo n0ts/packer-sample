@@ -1,7 +1,7 @@
 {
   "variables" : {
-    "description": "CentOS 7.x Latest with disable SELinux, include awscli",
-    "region" : "{{ env `AWS_DEFAULT_REGION` }}",
+    "description": "Latest CentOS 7.x with disabled SELinux, included awscli",
+    "region" : "{{ env `AWS_REGION` }}",
     "ami_id": "{{ env `PACKER_AMI_ID` }}",
     "ami_name": "centos7",
     "instance_type": "{{ env `PACKER_INSTANCE_TYPE` }}",
@@ -53,7 +53,7 @@
       "inline": [
         "sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config",
         "yum -y install epel-release",
-        "yum -y install gcc python-pip python-devel",
+        "yum -y install python-pip",
         "pip install --upgrade pip",
         "pip install awscli",
         "yum -y upgrade",
